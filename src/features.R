@@ -6,19 +6,14 @@ engineer_predictors <- function(df) {
   df
 }
 
-censoring_indicator <- function(risk) {
-  ifelse(risk == 0, "left", ifelse(risk == 1, "right", "none"))
-}
-
 stratified_subsample <- function(df, target_col, n, n_strata = 10, seed = 42, boundary_values = NULL) {
   set.seed(seed)
 
-  # Boundary values (e.g. exact 0/1 for a censored response) are guaranteed full
-  # inclusion rather than proportional decile representation. A censored-regression
-  # model's censoring mechanism is identified specifically by these rows; a rare
-  # boundary value (e.g. 61 of 517,754 rows) can easily be reduced to 0-1 rows by
-  # proportional sampling alone, which produces a pathologically unstable posterior
-  # (see design spec / implementation plan Task 8 self-review for the diagnosed case).
+  # Boundary values (e.g. exact 0/1 for accident_risk) are guaranteed full
+  # inclusion rather than proportional decile representation -- a rare boundary
+  # value (e.g. 61 of 517,754 rows) can easily be reduced to 0-1 rows by
+  # proportional sampling alone, which undermines the model's ability to learn
+  # anything about that part of the outcome's range.
   boundary_idx <- integer(0)
   if (!is.null(boundary_values)) {
     boundary_idx <- which(df[[target_col]] %in% boundary_values)

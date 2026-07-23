@@ -3,8 +3,7 @@ source("src/metrics.R")
 library(brms)
 library(data.table)
 
-winner <- trimws(readLines("models/winning_family.txt"))
-fit <- readRDS(sprintf("models/fit_%s.rds", winner))
+fit <- readRDS("models/fit_beta.rds")
 
 train <- fread("data/raw/train.csv")
 train <- as.data.frame(train)
@@ -20,10 +19,8 @@ pred <- colMeans(pred_draws)
 full_data_rmse <- rmse(holdout$accident_risk, pred)
 
 cv_summary <- read.csv("tables_figures/cv/cv_summary.csv")
-cv_rmse_col <- sprintf("%s_rmse", winner)
-subsample_cv_rmse <- mean(cv_summary[[cv_rmse_col]])
+subsample_cv_rmse <- mean(cv_summary$beta_rmse)
 
-cat(sprintf("Winning family: %s\n", winner))
 cat(sprintf("Full-data (%d held-out rows) RMSE: %.5f\n", nrow(holdout), full_data_rmse))
 cat(sprintf("Subsample CV RMSE: %.5f\n", subsample_cv_rmse))
 cat(sprintf("Difference: %.5f\n", full_data_rmse - subsample_cv_rmse))
@@ -31,7 +28,7 @@ cat(sprintf("Difference: %.5f\n", full_data_rmse - subsample_cv_rmse))
 dir.create("tables_figures/validation", showWarnings = FALSE, recursive = TRUE)
 write.csv(
   data.frame(
-    winning_family = winner, n_holdout_rows = nrow(holdout),
+    n_holdout_rows = nrow(holdout),
     full_data_rmse = full_data_rmse, subsample_cv_rmse = subsample_cv_rmse,
     difference = full_data_rmse - subsample_cv_rmse
   ),

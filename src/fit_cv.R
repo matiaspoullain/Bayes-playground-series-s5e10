@@ -3,11 +3,6 @@ source("src/metrics.R")
 source("src/model_spec.R")
 library(brms)
 
-# The Tobit (censored-Gaussian) family was dropped after failing to converge
-# reliably across multiple fixes -- see
-# tables_figures/compare/tobit_non_convergence_investigation.md. Beta
-# regression is the sole family fit from here on.
-
 sub <- read.csv("data/processed/model_subsample.csv")
 
 set.seed(42)

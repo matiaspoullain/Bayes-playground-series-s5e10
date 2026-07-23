@@ -1,8 +1,7 @@
 library(brms)
 library(ggplot2)
 
-winner <- trimws(readLines("models/winning_family.txt"))
-fit <- readRDS(sprintf("models/fit_%s.rds", winner))
+fit <- readRDS("models/fit_beta.rds")
 sub <- read.csv("data/processed/model_subsample.csv")
 
 dir.create("tables_figures/report", showWarnings = FALSE, recursive = TRUE)
@@ -34,38 +33,29 @@ compute_ame <- function(predictor, low_val, high_val) {
   pred_low <- posterior_epred(fit, newdata = data_low, draw_ids = draw_ids)
   pred_high <- posterior_epred(fit, newdata = data_high, draw_ids = draw_ids)
 
-  # per-draw average effect across all rows, then summarize over draws
-  per_draw_ame <- rowMeans(pred_high - pred_low)
-  c(
-    estimate = mean(per_draw_ame),
-    q2_5 = unname(quantile(per_draw_ame, 0.025)),
-    q97_5 = unname(quantile(per_draw_ame, 0.975))
-  )
+  # per-draw average effect across all rows -- the full posterior distribution
+  # of the AME, not just its summary
+  rowMeans(pred_high - pred_low)
 }
 
-ame_results <- data.frame(
-  term = character(), ame = numeric(), ame_q2_5 = numeric(), ame_q97_5 = numeric(),
-  published_original_data = numeric(), stringsAsFactors = FALSE
-)
-
+terms_order <- c("curvature", binary_predictors)
 published <- c(
   curvature = 0.3, lighting_night = 0.2, weather_not_clear = 0.1,
   speed_fast = 0.2, accidents_many = 0.1
 )
 
-ame_curv <- compute_ame("curvature", 0, 1)
-ame_results <- rbind(ame_results, data.frame(
-  term = "curvature", ame = ame_curv["estimate"], ame_q2_5 = ame_curv["q2_5"],
-  ame_q97_5 = ame_curv["q97_5"], published_original_data = published["curvature"]
-))
+ame_draws <- lapply(terms_order, function(p) compute_ame(p, 0, 1))
+names(ame_draws) <- terms_order
 
-for (p in binary_predictors) {
-  ame_p <- compute_ame(p, 0, 1)
-  ame_results <- rbind(ame_results, data.frame(
-    term = p, ame = ame_p["estimate"], ame_q2_5 = ame_p["q2_5"],
-    ame_q97_5 = ame_p["q97_5"], published_original_data = published[p]
-  ))
-}
+ame_results <- do.call(rbind, lapply(terms_order, function(p) {
+  draws <- ame_draws[[p]]
+  data.frame(
+    term = p, ame = mean(draws),
+    ame_q2_5 = unname(quantile(draws, 0.025)),
+    ame_q97_5 = unname(quantile(draws, 0.975)),
+    published_original_data = published[p]
+  )
+}))
 rownames(ame_results) <- NULL
 
 write.csv(ame_results, "tables_figures/report/average_marginal_effects.csv", row.names = FALSE)
@@ -77,13 +67,23 @@ cat(sprintf(
   phi_summary["Estimate"], phi_summary["l-95% CI"], phi_summary["u-95% CI"]
 ))
 
-ggplot(ame_results, aes(y = term)) +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
-  geom_point(aes(x = published_original_data, color = "Published (original data)"), size = 3, shape = 17) +
-  geom_pointrange(aes(x = ame, xmin = ame_q2_5, xmax = ame_q97_5, color = "Posterior AME (this competition)")) +
+ame_draws_long <- do.call(rbind, lapply(terms_order, function(p) {
+  data.frame(term = p, ame_draw = ame_draws[[p]])
+}))
+ame_draws_long$term <- factor(ame_draws_long$term, levels = terms_order)
+published_df <- data.frame(term = factor(terms_order, levels = terms_order), published = published[terms_order])
+
+ggplot(ame_draws_long, aes(x = ame_draw)) +
+  geom_density(fill = "#1B6CA8", alpha = 0.4, color = "#1B6CA8") +
+  geom_vline(
+    data = published_df, aes(xintercept = published),
+    linetype = "dashed", color = "firebrick", linewidth = 0.7
+  ) +
+  facet_wrap(~ term, scales = "free") +
   labs(
-    x = "Effect on accident_risk (probability-scale)", y = NULL, color = NULL,
-    title = "Average marginal effects (Beta model) vs. published formula coefficients"
+    x = "Average marginal effect on accident_risk (probability-scale)", y = "Posterior density",
+    title = "Posterior distribution of each predictor's effect vs. the published formula",
+    subtitle = "Dashed red line = published (original data) coefficient"
   ) +
   theme_minimal()
-ggsave("tables_figures/report/coefficient_forest_plot.png", width = 9, height = 6)
+ggsave("tables_figures/report/coefficient_forest_plot.png", width = 10, height = 7)

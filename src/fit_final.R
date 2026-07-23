@@ -3,8 +3,6 @@ source("src/metrics.R")
 source("src/model_spec.R")
 library(brms)
 
-# Beta only -- see tables_figures/compare/tobit_non_convergence_investigation.md
-
 sub <- read.csv("data/processed/model_subsample.csv")
 sub$accident_risk_squeezed <- squeeze_unit_interval(sub$accident_risk, n = nrow(sub))
 

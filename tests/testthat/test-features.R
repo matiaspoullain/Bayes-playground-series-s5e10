@@ -15,13 +15,6 @@ test_that("engineer_predictors computes the 4 binary indicators correctly", {
   expect_equal(result$accidents_many, c(0, 1, 0))
 })
 
-test_that("censoring_indicator flags exact 0 and 1 as left/right censored", {
-  risk <- c(0, 0.5, 1, 0.99, 0.001)
-  result <- censoring_indicator(risk)
-
-  expect_equal(result, c("left", "none", "right", "none", "none"))
-})
-
 test_that("stratified_subsample returns exactly n rows", {
   set.seed(1)
   df <- data.frame(id = 1:10000, y = runif(10000))

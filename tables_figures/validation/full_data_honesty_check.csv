@@ -1,2 +1,2 @@
-"winning_family","n_holdout_rows","full_data_rmse","subsample_cv_rmse","difference"
-"beta",497754,0.0680032930343014,0.0809851919126601,-0.0129818988783587
+"n_holdout_rows","full_data_rmse","subsample_cv_rmse","difference"
+497754,0.0680032930343014,0.0809851919126601,-0.0129818988783587

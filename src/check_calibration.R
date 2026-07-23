@@ -1,10 +1,8 @@
 source("src/metrics.R")
 library(ggplot2)
 
-winner <- trimws(readLines("models/winning_family.txt"))
 oof <- read.csv("tables_figures/cv/oof_predictions.csv")
-pred_col <- sprintf("%s_pred", winner)
-oof$pred <- oof[[pred_col]]
+oof$pred <- oof$beta_pred
 
 dir.create("tables_figures/calibration", showWarnings = FALSE, recursive = TRUE)
 
@@ -17,10 +15,10 @@ reliability <- aggregate(
 )
 
 overall_rmse <- rmse(oof$accident_risk, oof$pred)
-cat(sprintf("Pooled out-of-fold RMSE (%s): %.5f\n", winner, overall_rmse))
+cat(sprintf("Pooled out-of-fold RMSE: %.5f\n", overall_rmse))
 
 write.csv(
-  data.frame(metric = "rmse", value = overall_rmse, family = winner),
+  data.frame(metric = "rmse", value = overall_rmse),
   "tables_figures/calibration/calibration_summary.csv", row.names = FALSE
 )
 
@@ -31,7 +29,7 @@ ggplot(reliability, aes(x = predicted_mean, y = observed_mean)) +
   coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
   labs(
     x = "Mean predicted accident_risk (per decile bin)", y = "Mean observed accident_risk",
-    title = sprintf("Reliability diagram (%s, out-of-fold predictions, 10 bins)", winner)
+    title = "Reliability diagram (out-of-fold predictions, 10 bins)"
   ) +
   theme_minimal()
 ggsave("tables_figures/calibration/reliability_diagram.png", width = 7, height = 7)
