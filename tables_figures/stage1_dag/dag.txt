@@ -1,0 +1,13 @@
+
+curvature                    --+
+lighting_night (night vs other) |
+weather_not_clear (not-clear)   +--> accident_risk   (5 direct causes, confirmed by this screen)
+speed_fast (>=60mph)            |
+accidents_many (>2 reported)  --+
+
+road_type, num_lanes, road_signs_present, public_road,
+time_of_day, holiday, school_season   -- tested, all DROPPED (see screening_results.csv):
+  every candidate's largest coefficient fell below 20% of the smallest known-formula
+  coefficient (effect-size threshold), despite several being 'significant' by F-test
+  at n=517,754 -- the p-value-vs-effect-size distinction this screen is designed to catch.
+
