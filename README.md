@@ -142,7 +142,7 @@ The Average Marginal Effects (AME) were sampled and compared to the parameters i
 
 All 5 effects are positive and aligned with the published formula, though the credible intervals are tight enough (n = 20,000) that most don't technically contain the published value, suggesting a small but detectable shift in the resynthesized data's structure, not just noise. Posterior `phi` (Beta precision) is 7.84 [7.69, 7.99].
 
-### Calibration and a known, honest limitation
+### Calibration and limitations
 
 ![Observed vs. predicted accident_risk](tables_figures/calibration/observed_vs_predicted.png)
 
